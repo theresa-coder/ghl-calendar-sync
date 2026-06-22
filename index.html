@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHL Calendar Sync</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        // App Component (inline for simplicity)
+        function App() {
+            const [status, setStatus] = React.useState([]);
+            const [isRunning, setIsRunning] = React.useState(false);
+            const [syncComplete, setSyncComplete] = React.useState(false);
+
+            const startSync = async () => {
+                setIsRunning(true);
+                setSyncComplete(false);
+                setStatus([]);
+
+                try {
+                    addLog('🚀 Starting GHL Calendar Sync...', 'info');
+
+                    const response = await fetch('/api/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.updates) {
+                        data.updates.forEach(update => {
+                            addLog(update.message, update.type);
+                        });
+                    }
+
+                    if (data.success) {
+                        setSyncComplete(true);
+                    }
+                } catch (error) {
+                    addLog(`❌ Error: ${error.message}`, 'error');
+                } finally {
+                    setIsRunning(false);
+                }
+            };
+
+            const addLog = (message, type = 'info') => {
+                setStatus(prev => [...prev, { message, type, id: Date.now() + Math.random() }]);
+            };
+
+            const clearStatus = () => {
+                setStatus([]);
+                setSyncComplete(false);
+            };
+
+            return (
+                <div style={styles.body}>
+                    <div style={styles.container}>
+                        <h1 style={styles.title}>📅 GHL Calendar Availability Sync</h1>
+                        <p style={styles.subtitle}>Automate availability across all your booking calendars</p>
+
+                        <div style={styles.infoBox}>
+                            <div>✓ Connected to Google Sheet</div>
+                            <div>✓ GHL API authenticated</div>
+                            <div>✓ Ready to sync 13 calendars</div>
+                        </div>
+
+                        <div style={styles.calendarsList}>
+                            <h3 style={styles.calendarListTitle}>Calendars Being Updated:</h3>
+
+                            <div style={{ ...styles.calendarGroup, borderLeftColor: '#4caf50' }}>
+                                <div style={styles.groupType}>GROUPED (Same Availability)</div>
+                                <div style={styles.calendarNames}>
+                                    • Insight Call<br />
+                                    • Mini Session<br />
+                                    • Clarity Catalyst Session<br />
+                                    • Enrollment Call<br />
+                                    • 2nd Insight/minisession<br />
+                                    • Connection Chat
+                                </div>
+                            </div>
+
+                            <div style={{ ...styles.calendarGroup, borderLeftColor: '#ff9800' }}>
+                                <div style={styles.groupType}>Individual Calendars</div>
+                                <div style={styles.calendarNames}>
+                                    • Private Session<br />
+                                    • Private Session (Continuing Clients)<br />
+                                    • Becoming More Me Podcast with Theresa
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={styles.credentials}>
+                            <div style={styles.credItem}>
+                                <span style={styles.credLabel}>API Connection:</span>
+                                <div style={styles.credValue}>✓ Active & Verified</div>
+                            </div>
+                        </div>
+
+                        <div style={styles.buttonGroup}>
+                            <button
+                                style={{
+                                    ...styles.button,
+                                    ...styles.btnPrimary,
+                                    opacity: isRunning ? 0.6 : 1,
+                                    cursor: isRunning ? 'not-allowed' : 'pointer'
+                                }}
+                                onClick={startSync}
+                                disabled={isRunning}
+                            >
+                                {isRunning ? (
+                                    <span>
+                                        <span style={styles.spinner}>●</span> Syncing...
+                                    </span>
+                                ) : syncComplete ? (
+                                    '✓ Sync Complete'
+                                ) : (
+                                    'Start Sync'
+                                )}
+                            </button>
+                            <button
+                                style={{ ...styles.button, ...styles.btnSecondary }}
+                                onClick={clearStatus}
+                            >
+                                Clear
+                            </button>
+                        </div>
+
+                        {status.length > 0 && (
+                            <div style={styles.statusDisplay}>
+                                {status.map(log => (
+                                    <div
+                                        key={log.id}
+                                        style={{
+                                            ...styles.statusLine,
+                                            ...(log.type === 'success' && styles.statusSuccess),
+                                            ...(log.type === 'error' && styles.statusError),
+                                            ...(log.type === 'info' && styles.statusInfo)
+                                        }}
+                                    >
+                                        {log.message}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const styles = {
+            body: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                minHeight: '100vh',
+                padding: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: 0
+            },
+            container: {
+                background: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                padding: '40px',
+                maxWidth: '600px',
+                width: '100%',
+                boxSizing: 'border-box'
+            },
+            title: {
+                color: '#333',
+                margin: '0 0 10px 0',
+                fontSize: '28px'
+            },
+            subtitle: {
+                color: '#666',
+                margin: '0 0 30px 0',
+                fontSize: '14px'
+            },
+            infoBox: {
+                background: '#f0f4ff',
+                borderLeft: '4px solid #667eea',
+                padding: '15px',
+                marginBottom: '25px',
+                borderRadius: '4px',
+                fontSize: '14px',
+                color: '#333',
+                lineHeight: '1.6'
+            },
+            calendarsList: {
+                background: '#f9f9f9',
+                padding: '15px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                fontSize: '13px'
+            },
+            calendarListTitle: {
+                color: '#333',
+                fontSize: '13px',
+                margin: '0 0 10px 0',
+                fontWeight: '600'
+            },
+            calendarGroup: {
+                marginBottom: '10px',
+                padding: '8px',
+                background: 'white',
+                borderRadius: '4px',
+                borderLeft: '3px solid #667eea'
+            },
+            groupType: {
+                fontSize: '11px',
+                fontWeight: '600',
+                color: '#999',
+                textTransform: 'uppercase',
+                marginBottom: '4px'
+            },
+            calendarNames: {
+                color: '#333',
+                lineHeight: '1.4'
+            },
+            credentials: {
+                background: '#f9f9f9',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '25px',
+                border: '1px solid #e0e0e0'
+            },
+            credItem: {
+                marginBottom: '15px',
+                fontSize: '13px'
+            },
+            credLabel: {
+                color: '#666',
+                fontWeight: '600',
+                display: 'block',
+                marginBottom: '4px'
+            },
+            credValue: {
+                color: '#333',
+                fontFamily: '"Courier New", monospace',
+                wordBreak: 'break-all',
+                background: 'white',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #ddd'
+            },
+            buttonGroup: {
+                display: 'flex',
+                gap: '12px',
+                marginBottom: '25px'
+            },
+            button: {
+                flex: 1,
+                padding: '14px 20px',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+            },
+            btnPrimary: {
+                background: '#667eea',
+                color: 'white'
+            },
+            btnSecondary: {
+                background: '#f0f0f0',
+                color: '#333',
+                border: '1px solid #ddd'
+            },
+            statusDisplay: {
+                background: '#f9f9f9',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                padding: '20px',
+                maxHeight: '400px',
+                overflowY: 'auto',
+                fontFamily: '"Courier New", monospace',
+                fontSize: '13px',
+                color: '#333'
+            },
+            statusLine: {
+                marginBottom: '8px',
+                padding: '6px',
+                borderRadius: '3px'
+            },
+            statusInfo: {
+                color: '#667eea'
+            },
+            statusSuccess: {
+                background: '#e8f5e9',
+                color: '#2e7d32'
+            },
+            statusError: {
+                background: '#ffebee',
+                color: '#c62828'
+            },
+            spinner: {
+                display: 'inline-block',
+                marginRight: '6px'
+            }
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

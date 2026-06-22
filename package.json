@@ -1,0 +1,20 @@
+{
+  "name": "ghl-calendar-sync",
+  "version": "1.0.0",
+  "description": "Automated GHL Calendar Availability Sync from Google Sheets",
+  "main": "api/server.js",
+  "scripts": {
+    "dev": "node api/server.js",
+    "start": "node api/server.js"
+  },
+  "keywords": ["ghl", "calendar", "automation", "google-sheets"],
+  "author": "Theresa Lear Levine",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "googleapis": "^118.0.0",
+    "axios": "^1.4.0"
+  }
+}
